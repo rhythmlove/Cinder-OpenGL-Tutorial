@@ -1,16 +1,28 @@
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
+#include "cinder/Utilities.h"
+#include "cinder/Rand.h"
 
 #include "cinder/params/Params.h"
 
-#include "tutorials/FirstTriangle.h"
-#include "tutorials/Matrices.h"
-#include "tutorials/ColoredCube.h"
-#include "tutorials/TexturedCube.h"
-#include "tutorials/KeyboardAndMouse.h"
-#include "tutorials/ModelLoading.h"
-#include "tutorials/ShadowCasting.h"
+// Enable point sprites on OSX
+#ifndef GL_POINT_SPRITE_ARB
+#define GL_POINT_SPRITE_ARB 0x8861
+#endif
+#ifndef GL_POINT_FADE_THRESHOLD_SIZE_ARB
+#define GL_POINT_FADE_THRESHOLD_SIZE_ARB 0x8128
+#endif
+#ifndef GL_POINT_SIZE_MIN_ARB
+#define GL_POINT_SIZE_MIN_ARB 0x8126
+#endif
+#ifndef GL_POINT_SIZE_MAX_ARB
+#define GL_POINT_SIZE_MIN_ARB 0x8127
+#endif
+#ifndef GL_VERTEX_PROGRAM_POINT_SIZE
+#define GL_VERTEX_PROGRAM_POINT_SIZE 0x8642
+#endif
+
 
 using namespace ci;
 using namespace ci::app;
@@ -23,82 +35,65 @@ public:
 	void update() override;
 	void draw() override;
 
-  void buildTutorialList();
-  void loadTutorial( int index );
 private:
-  using TutorialList = vector< pair<string, function<TutorialRef()>> >;
-
-	params::InterfaceGlRef  mParams;
-
-  TutorialList            mTutorialMakers;
-  int                     mTutorialIndex = 0;
-  int                     mPrevTutorialIndex = 0;
-  TutorialRef             mCurrentTutorial = nullptr;
+  vector<ci::vec3> positions;
+  ci::gl::GlslProgRef mShader;
 };
 
 void OpenGlTutorialApp::setup()
 {
-  buildTutorialList();
-
-  // Build parameters for moving through tutorial list.
-	mParams = params::InterfaceGl::create( "OpenGL Tutorial", ivec2( 300, 100 ) );
-  mParams->setOptions( "", "valueswidth=150" );
-
-  vector<string> names;
-  for( auto &tut : mTutorialMakers ) {
-    names.push_back( tut.first );
+  int distFromCenter = 900;
+  for(int i=0; i < 60000; ++i)
+  {
+    positions.push_back(vec3(-(distFromCenter/2)+randFloat()*distFromCenter,-(distFromCenter/2)+randFloat()*distFromCenter,-(distFromCenter/2)+randFloat()*distFromCenter));
   }
-  mParams->addParam( "Current Tutorial", names, &mTutorialIndex );
-  mParams->addButton( "Next Tutorial", [this] { loadTutorial( mTutorialIndex + 1 ); } );
-  mParams->addButton( "Previous Tutorial", [this] { loadTutorial( mTutorialIndex - 1 ); } );
-  mParams->addButton( "Reload Tutorial", [this] { loadTutorial( mTutorialIndex ); } );
-
-  // load the last tutorial.
-  loadTutorial( mTutorialMakers.size() - 1 );
+  
+  // Load shader programs from our assets folder.
+  mShader = gl::GlslProg::create( gl::GlslProg::Format()
+                                 .vertex( app::loadAsset( "02/noTransform.vs" ) )
+                                 .fragment( app::loadAsset( "02/red.fs" ) ) );
 }
 
-void OpenGlTutorialApp::buildTutorialList()
-{
-  mTutorialMakers.push_back( make_pair( "02 First Triangle", &make_shared<FirstTriangle> ) );
-  mTutorialMakers.push_back( make_pair( "03 Matrices", &make_shared<Matrices> ) );
-  mTutorialMakers.push_back( make_pair( "04 Colored Cube", &make_shared<ColoredCube> ) );
-  mTutorialMakers.push_back( make_pair( "05 Textured Cube", &make_shared<TexturedCube> ) );
-  mTutorialMakers.push_back( make_pair( "06 Keyboard and Mouse", &make_shared<KeyboardAndMouse> ) );
-  mTutorialMakers.push_back( make_pair( "07 Model Loading", &make_shared<ModelLoading> ) );
-  mTutorialMakers.push_back( make_pair( "08 Shadow Casting", &make_shared<ShadowCasting> ) );
-}
-
-void OpenGlTutorialApp::loadTutorial( int index )
-{
-  if( index < 0 ) {
-    index = mTutorialMakers.size() - 1;
-  }
-  mTutorialIndex = index % mTutorialMakers.size();
-  mPrevTutorialIndex = mTutorialIndex;
-
-  mCurrentTutorial = mTutorialMakers[mTutorialIndex].second();
-  mCurrentTutorial->setup();
-}
 
 void OpenGlTutorialApp::mouseDown( MouseEvent event )
 {
+  console() << "Working!" << endl;
 }
 
 void OpenGlTutorialApp::update()
 {
-  if( mPrevTutorialIndex != mTutorialIndex ) {
-    loadTutorial( mTutorialIndex );
-  }
-  mCurrentTutorial->update();
+  
 }
 
 void OpenGlTutorialApp::draw()
 {
-	gl::clear( Color( 0, 0, 0 ) );
+  gl::clear(Color(0,0,0));
+  gl::enable(GL_POINT_SPRITE_ARB);
+  //gl::pointSize(10.0f);
+  
+  gl::translate( vec3(getWindowWidth()/2,getWindowHeight()/2,0) );
+  
+  // Use our shader.
+  gl::ScopedGlslProg prog( mShader );
+  //glPointParameterf( GL_POINT_FADE_THRESHOLD_SIZE_ARB, 1.0f );
+  //glPointParameterf( GL_POINT_SIZE_MIN_ARB, 0.1f );
+ // glPointParameterf( GL_POINT_SIZE_MAX_ARB, 200.0f );
+  gl::enable( GL_VERTEX_PROGRAM_POINT_SIZE );   // or use: glEnable
+  
+  gl::begin(GL_POINTS);
+  
+  for (std::vector<vec3>::iterator it = positions.begin() ; it != positions.end(); ++it)
+  {
+    
+    vec3 newPos = (vec3)*it;
+    //vec3 multiplyPos = newPos*cos(getElapsedSeconds())*1.5;
+    gl::vertex(newPos);
+  }
+  
+  gl::end();
+  
+  gl::translate( vec3(-getWindowWidth()/2,-getWindowHeight()/2,0) );
 
-  mCurrentTutorial->draw();
-
-	mParams->draw();
 }
 
 void prepareSettings( App::Settings *settings )
@@ -109,5 +104,6 @@ void prepareSettings( App::Settings *settings )
   // We can specify whether we want a fullscreen window, too.
   settings->setFullScreen( false );
 }
+
 
 CINDER_APP( OpenGlTutorialApp, RendererGl, prepareSettings )

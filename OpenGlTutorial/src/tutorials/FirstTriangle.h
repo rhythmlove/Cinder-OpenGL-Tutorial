@@ -29,6 +29,13 @@
 
 #include "TutorialBase.h"
 #include "cinder/gl/VboMesh.h"
+#include "cinder/Utilities.h"
+#include "cinder/params/Params.h"
+#include "cinder/Rand.h"
+#include "cinder/ImageIo.h"
+
+using namespace std;
+using namespace ci;
 
 ///
 /// Draw a triangle to screen using homogeneous coordinates.
@@ -40,6 +47,6 @@ public:
 
   void draw() override;
 private:
-  ci::gl::VboMeshRef  mTriangleMesh;
+  vector<ci::vec3> positions;
   ci::gl::GlslProgRef mShader;
 };

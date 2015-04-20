@@ -44,15 +44,15 @@ void FirstTriangle::setup()
 
   // Upload our positions to the GPU.
   // This performs the genBuffers and buffers our data.
-  gl::VboRef positionBuffer = gl::Vbo::create( GL_ARRAY_BUFFER, position );
+  //gl::VboRef positionBuffer = gl::Vbo::create( GL_ARRAY_BUFFER, position );
 
   // BufferLayout describes what data is in our position buffer.
   // This determines the settings passed to glVertexAttribPointer.
-  geom::BufferLayout layout;
-  layout.append( geom::Attrib::POSITION, 3, 0, 0 );
+  //geom::BufferLayout layout;
+  //layout.append( geom::Attrib::POSITION, 3, 0, 0 );
 
   // Cache vertex attribute info describing our VBO in a VAO so we can draw it.
-  mTriangleMesh = gl::VboMesh::create( position.size(), GL_TRIANGLES, { { layout, positionBuffer } } );
+//  mTriangleMesh = gl::VboMesh::create( position.size(), GL_POIN, { { layout, positionBuffer } } );
 
   // Load shader programs from our assets folder.
   mShader = gl::GlslProg::create( gl::GlslProg::Format()
@@ -64,10 +64,19 @@ void FirstTriangle::draw()
 {
   gl::color( 1.0f, 1.0f, 1.0f );
 
+  gl::enable(GL_POINT_SPRITE_ARB);
+  gl::pointSize(10.0f);
+  
+ // gl::translate( Vec3f(getWindowWidth()/2,getWindowHeight()/2,0) );
+  
   // Use our shader.
   gl::ScopedGlslProg prog( mShader );
+  
+  
 
   // Draw our triangle.
   // Binds our VAO description of our mesh and draws using the primitive we specified earlier.
-  gl::draw( mTriangleMesh );
+  //gl::draw( mTriangleMesh );
+  
+//  gl::translate( Vec3f(-ci::
 }

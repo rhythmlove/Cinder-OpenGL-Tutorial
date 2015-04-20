@@ -6,6 +6,7 @@ layout(location = 0) in vec3 ciPosition;
 
 void main()
 {
+    gl_PointSize = 20.0;
 	gl_Position.xyz = ciPosition;
 	gl_Position.w = 1.0;
 }
